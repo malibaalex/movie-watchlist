@@ -1,7 +1,7 @@
-import deleteMovieHandler from "../handlers/delete-movie";
-import getMovieHandler from "../handlers/get-movie";
-import updateMovieHandler from "../handlers/update-movie";
+import deleteMovie from "../handlers/delete-movie";
+import getMovie from "../handlers/get-movie";
+import updateMovie from "../handlers/update-movie";
 
-export const GET = getMovieHandler;
-export const POST = updateMovieHandler;
-export const DELETE = deleteMovieHandler;
+export const GET = getMovie;
+export const POST = updateMovie;
+export const DELETE = deleteMovie;
