@@ -1,78 +1,56 @@
+import { badRequest, handle, json, notFound } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
+interface UpdateMovieBody {
+  title?: string;
+  description?: string;
+  releaseYear?: number;
 }
 
-export const updateMovieHandler = async (
-  req: Request,
-  { params }: RouteContext,
-) => {
-  try {
+const updateMovie = handle(
+  "PATCH /api/movies/:id",
+  async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
 
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return Response.json({ error: "Invalid JSON body" }, { status: 400 });
-    }
+    const body = (await req.json()) as UpdateMovieBody;
 
-    if (!body) {
-      return Response.json({ error: "Invalid JSON body" }, { status: 400 });
-    }
-
-    const data: { title?: string; description?: string; releaseYear?: number } =
-      {};
+    const data: UpdateMovieBody = {};
 
     if (body.title !== undefined) {
       if (typeof body.title !== "string" || !body.title.trim()) {
-        return Response.json(
-          { error: "title must be a non-empty string" },
-          { status: 400 },
-        );
+        return badRequest("title must be a non-empty string");
       }
       data.title = body.title.trim();
     }
 
     if (body.description !== undefined) {
       if (typeof body.description !== "string") {
-        return Response.json(
-          { error: "description must be a string" },
-          { status: 400 },
-        );
+        return badRequest("description must be a string");
       }
       data.description = body.description;
     }
 
     if (body.releaseYear !== undefined) {
       if (!Number.isInteger(body.releaseYear)) {
-        return Response.json(
-          { error: "releaseYear must be an integer" },
-          { status: 400 },
-        );
+        return badRequest("releaseYear must be an integer");
       }
-      data.releaseYear = body.releaseYear as number;
+      data.releaseYear = body.releaseYear;
     }
 
     if (Object.keys(data).length === 0) {
-      return Response.json(
-        { error: "Provide at least one field to update" },
-        { status: 400 },
-      );
+      return badRequest("Provide at least one field to update");
     }
 
-    const updatedMovie = await prisma.orm.public.Movie.where({ id: id }).update(
+    const updatedMovie = await prisma.orm.public.Movie.where({ id }).update(
       data,
     );
 
-    return Response.json(
-      { message: "Movie updated successfully", updatedMovie },
-      { status: 200 },
-    );
-  } catch {
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-};
+    if (!updatedMovie) {
+      return notFound("Movie not found");
+    }
 
-export default updateMovieHandler;
+    return json(updatedMovie, 200);
+  },
+);
+
+export default updateMovie;
