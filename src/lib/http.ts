@@ -6,6 +6,8 @@ export const json = (data: unknown, status = 200) =>
 export const notFound = (what: string) =>
   json({ error: `${what} not found` }, 404);
 
+export const badRequest = (message: string) => json({ error: message }, 400);
+
 /** Wraps a route handler so unexpected errors become a 500. */
 export const handle =
   <A extends unknown[]>(label: string, fn: (...args: A) => Promise<Response>) =>
@@ -17,3 +19,7 @@ export const handle =
       return json({ error: "Internal server error" }, 500);
     }
   };
+
+export interface RouteContext {
+  params: Promise<{ id: string }>;
+}

@@ -1,30 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { handle, notFound, RouteContext } from "@/lib/http";
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-const getMovieHandler = async (req: Request, { params }: RouteContext) => {
-  try {
+// GET /api/movies/:id
+const getMovie = handle(
+  "GET /api/movies/[id]",
+  async (_req: Request, { params }: RouteContext) => {
     const { id } = await params;
+    const movie = await prisma.orm.public.Movie.where({ id }).first();
 
-    const movie = prisma.orm.public.Movie.where({
-      id: id,
-    }).first();
+    return movie ? NextResponse.json(movie) : notFound("Movie");
+  },
+);
 
-    if (!movie) {
-      return NextResponse.json({ error: "Movie not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(movie, { status: 200 });
-  } catch (error) {
-    console.error("GET /api/movies/[id] failed:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-};
-
-export default getMovieHandler;
+export default getMovie;

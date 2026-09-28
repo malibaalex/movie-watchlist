@@ -1,3 +1,5 @@
-import { listMoviesHandler } from "./handlers/list-movies";
+import createMovie from "./handlers/create-movie";
+import { getMovies } from "./handlers/get-movies";
 
-export const GET = listMoviesHandler;
+export const POST = createMovie;
+export const GET = getMovies;

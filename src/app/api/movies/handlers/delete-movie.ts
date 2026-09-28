@@ -1,21 +1,18 @@
+import { handle, notFound } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
+import { RouteContext } from "@/lib/http";
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+// DELETE /api/movies/:id
+export const deleteMovie = handle(
+  "DELETE /api/movies/[id]",
+  async (_req: Request, { params }: RouteContext) => {
+    const { id } = await params;
 
-const deleteMovieHandler = async (req: Request, { params }: RouteContext) => {
-  const { id } = await params;
+    await prisma.orm.public.MovieGenre.where({ movieId: id }).deleteAll();
+    const deleted = await prisma.orm.public.Movie.where({ id }).delete();
 
-  const existingMovie = await prisma.orm.public.Movie.where({ id }).first();
-  if (!existingMovie) {
-    return Response.json({ error: "Movie not found" }, { status: 404 });
-  }
+    return deleted ? new Response(null, { status: 204 }) : notFound("Movie");
+  },
+);
 
-  await prisma.orm.public.MovieGenre.where({ movieId: id }).deleteAll();
-  await prisma.orm.public.Movie.where({ id }).delete();
-
-  return new Response(null, { status: 204 });
-};
-
-export default deleteMovieHandler;
+export default deleteMovie;
