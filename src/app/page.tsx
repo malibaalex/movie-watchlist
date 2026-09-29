@@ -1,64 +1,80 @@
-// "use client";
+/* eslint-disable @next/next/no-img-element */
+"use client";
 
-// import { useEffect, useState } from "react";
-// import type { Movie } from "@/app/api/movies/route";
-// import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
-// const Page = () => {
-//   const [movies, setMovies] = useState<Movie[]>([]);
+type Movie = {
+  id: string;
+  title: string;
+  description: string | null;
+  releaseYear: number | null;
+};
 
-//   const fetchData = async () => {
-//     try {
-//       const response = await fetch("/api/movies");
+// The schema has no image column, so posters are placeholders seeded by movie id.
+// When you add a posterUrl field, swap this for m.posterUrl.
+const posterFor = (id: string) => `https://picsum.photos/seed/${id}/400/250`;
 
-//       if (!response.ok) {
-//         throw new Error("Failed to fetch data");
-//       }
+const MoviesPage = () => {
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-//       const result: Movie[] = await response.json();
-//       setMovies(result);
-//     } catch (error) {
-//       console.error({ error });
-//     }
-//   };
+  useEffect(() => {
+    fetch("/api/movies")
+      .then((res) => {
+        if (!res.ok) throw new Error("Could not load movies");
+        return res.json();
+      })
+      .then(setMovies)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
 
-//   useEffect(() => {
-//     // eslint-disable-next-line react-hooks/set-state-in-effect
-//     fetchData();
-//   }, []);
+  return (
+    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      <div className="mx-auto max-w-5xl px-4 py-10">
+        <h1 className="mb-8 text-3xl font-semibold tracking-tight">Movies</h1>
 
-//   return (
-//     <div className="grid grid-cols-5 gap-3">
-//       {movies.map((movie) => (
-//         <article
-//           key={movie.id}
-//           className="group flex flex-col overflow-hidden rounded-md border border-neutral-200 bg-white transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
-//         >
-//           <div className="relative aspect-2/3 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-//             <Image
-//               src={`https://picsum.photos/seed/${movie.id}/300/450`}
-//               alt=""
-//               aria-hidden="true"
-//               className="h-full w-full object-cover"
-//               loading="lazy"
-//             />
-//             <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/0 to-black/0" />
-//             {movie.releaseYear && (
-//               <span className="absolute bottom-2 left-2 font-mono text-xs text-white/80">
-//                 {movie.releaseYear}
-//               </span>
-//             )}
-//           </div>
+        {error && <p className="text-red-400">{error}</p>}
 
-//           <div className="flex flex-1 flex-col gap-1 p-2">
-//             <h3 className="line-clamp-1 text-sm font-semibold leading-snug text-neutral-900 dark:text-neutral-50">
-//               {movie.title}
-//             </h3>
-//           </div>
-//         </article>
-//       ))}
-//     </div>
-//   );
-// };
+        {loading ? (
+          <p className="text-zinc-500">Loading…</p>
+        ) : movies.length === 0 ? (
+          <p className="text-zinc-500">No movies yet.</p>
+        ) : (
+          <ul className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+            {movies.map((m) => (
+              <li key={m.id}>
+                <Link
+                  href={`/movies/${m.id}`}
+                  className="block overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50 transition hover:border-zinc-600"
+                >
+                  <img
+                    src={posterFor(m.id)}
+                    alt={`${m.title} poster`}
+                    loading="lazy"
+                    className="aspect-16/10 w-full bg-zinc-800 object-cover"
+                  />
+                  <div className="p-3">
+                    <h2 className="font-medium leading-snug">{m.title}</h2>
+                    {m.releaseYear && (
+                      <p className="text-sm text-zinc-500">{m.releaseYear}</p>
+                    )}
+                    {m.description && (
+                      <p className="mt-2 line-clamp-3 text-sm text-zinc-400">
+                        {m.description}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </main>
+  );
+};
 
-// export default Page;
+export default MoviesPage;
