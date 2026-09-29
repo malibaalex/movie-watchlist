@@ -54,13 +54,39 @@ Requires Node.js and [pnpm](https://pnpm.io).
 pnpm install
 ```
 
-Set up the database and seed it using the scripts in `package.json` and the seed file at `prisma/seed.ts`, then start the dev server:
+This project uses **Prisma 8**, where the schema is called the _contract_ (`prisma/contract.prisma`) and generating types is called _emit_. Seeding no longer goes through the old `prisma migrate dev` / `prisma db seed` flow.
 
-```bash
-pnpm dev
-```
+1. Set your database connection:
+
+   ```bash
+   export DATABASE_URL="postgresql://username:password@host:5432/database"
+   ```
+
+2. Emit the contract, plan the migration, review it, then apply it:
+
+   ```bash
+   pnpm dlx prisma@latest contract emit
+   pnpm dlx prisma@latest migration plan
+   pnpm dlx prisma@latest db migrate --db "$DATABASE_URL"
+   ```
+
+   Use `migration status --db "$DATABASE_URL"` to see what is applied. On a brand-new empty database you can instead run `db init --db "$DATABASE_URL"`, which creates the tables straight from the contract.
+
+3. Seed the database. Prisma 8 has no built-in `db seed` command, so seeding is a script that runs `prisma/seed.ts`. Use the seed script from `package.json`:
+
+   ```bash
+   pnpm run db:seed
+   ```
+
+4. Start the dev server:
+
+   ```bash
+   pnpm dev
+   ```
 
 Open <http://localhost:3000>.
+
+> Prisma 8 is still a release candidate, so command names may change. If a command fails, check the scripts in `package.json` and the [Prisma 8 CLI docs](https://www.prisma.io/docs/cli/configuration).
 
 ## Project structure
 
